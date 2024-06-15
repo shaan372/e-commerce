@@ -1,7 +1,8 @@
 plugins {
-	id "java"
-	id "org.springframework.boot" version "2.7.7"
-	id "io.spring.dependency-management" version "1.0.15.RELEASE"
+    id "java"
+    id "org.springframework.boot" version "2.7.7"
+    id "io.spring.dependency-management" version "1.0.15.RELEASE"
+    id 'com.diffplug.spotless' version '6.19.0'
 }
 
 group = 'com.example'
@@ -9,32 +10,61 @@ version = '0.0.1-SNAPSHOT'
 
 def springFoxVersion = "3.0.0"
 
+spotless {
+    format 'misc', {
+        // argeted files other than java to be formatted
+        target '*.gradle', '*.md', '.gitignore'
+
+        trimTrailingWhitespace()
+        indentWithSpaces()
+        endWithNewline()
+    }
+
+    java {
+        target 'src/*/java/**/*.java'
+        importOrder()
+        removeUnusedImports()
+        def importPattern = /\nimport .*\*;/
+
+        custom 'Refuse wildcard imports', {
+            if (it =~ importPattern) {
+                throw new AssertionError("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.")
+            }
+        }
+
+        googleJavaFormat('1.10.0').aosp().reflowLongStrings().groupArtifact('com.google.googlejavaformat:google-java-format')
+    }
+}
+
+check.dependsOn spotlessApply
+
+
 java {
-	sourceCompatibility = '17'
+    sourceCompatibility = '17'
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	implementation "io.springfox:springfox-swagger2:${springFoxVersion}"
-	implementation "io.springfox:springfox-boot-starter:${springFoxVersion}"
-	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'org.postgresql:postgresql'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation "io.springfox:springfox-swagger2:${springFoxVersion}"
+    implementation "io.springfox:springfox-boot-starter:${springFoxVersion}"
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
